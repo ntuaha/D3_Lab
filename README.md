@@ -2,10 +2,10 @@
 
 ## 起手
 
-'''
-  bower install
-  npm install
-'''
+```
+    bower install
+    npm install
+```
 
 
 ## 目的
