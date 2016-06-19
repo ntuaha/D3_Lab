@@ -27,7 +27,7 @@ var cc=[
 
 
 
-function initializeRender(canvas,data,options){
+function initializeRender(canvas,data,options,callback){
   //建立自己的一個group
   var doms = canvas.append("g").selectAll("text")
       .data(ETL(options.list,data))
@@ -39,20 +39,15 @@ function initializeRender(canvas,data,options){
       .text(function(d){return options.currentFormat(d.rate)});
 
   //更新新資料
-  setInterval(function(){ 
-    d3.json(options.href,function(data){
-      updateRender(doms,data,{
-        "duration":options.duration*0.9,
-        "currentFormat":options.currentFormat,
-        "list":options.list
-      })
-    }); 
-  }, options.duration);                                                              
+  callback(doms,data,{
+    "animation_duration":options.duration*0.9,
+    "currentFormat":options.currentFormat,
+    "list":options.list,
+    "update_duration":options.duration
+  });
+                                                 
 }
 
-function color(previous,current){
-  return ((current - previous) > 0)?"fill:#F25F5C":"fill:#70C1B3";
-}
 
 function updateRender(doms,data,options){
   //更新資料
@@ -62,7 +57,7 @@ function updateRender(doms,data,options){
   d2.exit().remove();
   //動畫
   d2.transition()
-      .duration(options.duration)
+      .duration(options.animation_duration)
       .tween('number',function(d){
           var i = d3.interpolate(+this.textContent, d.rate);
           d3.select(this).attr("style",color(this.textContent,d.rate));
@@ -72,31 +67,7 @@ function updateRender(doms,data,options){
       });
 }
 
-      
-function ETL(list,rate){
-    //整理資料成 {"幣別":"內容"}
-    var data = {};
-    rate.forEach(function(d){
-      data[d.name] = d;
-    });
-
-    //放入輸出資料    
-    var geo_data = [];
-    list.forEach(function(d){
-      if(d.name in data){
-        var datum = data[d.name];
-        geo_data.push({
-          "place":d.place,
-          "name":d.name,
-          /*
-          "rate":datum.score1
-          */
-          "rate":Math.random()*40
-        });
-      }
-    });
-    return geo_data;
-}
+ 
 
 
 
@@ -142,56 +113,32 @@ $(function(){
           .attr("height",30)
           .attr("xlink:href",function(d){return d.link;});
 
-      //initalize Currency Render
+      //config Currency Render
       var rate_href = "http://52.39.23.166/api/rate";
+      var options = {
+        "projection":projection,
+        "duration":2000,
+        "currentFormat":function(num){ return d3.format(".3f")(num); },
+        "list":cc
+      };
+
+      //initalize Currency Render
       d3.json(rate_href,function(data){ 
-        initializeRender(canvas,data,{
-          "projection":projection,
-          "duration":2000,
-          "href":rate_href,
-          "currentFormat":function(num){ return d3.format(".3f")(num); },
-          "list":cc
+        initializeRender(canvas,data,options,function callback(doms,data,options){
+          setInterval(function(){ 
+            d3.json(rate_href,function(data){
+              updateRender(doms,data,options)
+            }); 
+          }, options.update_duration);               
         }); 
       });
 
-      //show time and build its own group    
-      rednerTimer(canvas,{x:80,y:450,interval:1000});
-      
-        
+      //show time and build its own group  
+      var optionsTimer = {x:80,y:450};         
+      rednerTimer(canvas,optionsTimer);              
   });
 
 
         
 });
 
-
-function getDateArray(d){
-  var year = d.getFullYear();
-  var month = d.getMonth()+1;
-  month = (month<10)?'0'+month:month;
-  var day = d.getDate();
-  day = (day<10)?'0'+day:day;
-  var hour = d.getHours();
-  hour = (hour<10)?'0'+hour:hour;
-  var min = d.getMinutes();
-  min = (min<10)?'0'+min:min;
-  var sec = d.getSeconds();
-  sec = (sec<10)?'0'+sec:sec;
-  return "更新時間："+year+"-"+month+"-"+day+" "+hour+":"+min+":"+sec;
-}
-
-
-function rednerTimer(canvas,options){
-  canvas.append("g").append("text")
-    .attr("class","time")
-    .attr("x",options.x)
-    .attr("y",options.y)
-    .text(getDateArray(new Date()));
-  //update
-  setInterval(updatedTime,options.interval);
-
-}
-
-function updatedTime(){
-    d3.select(".time").text(getDateArray(new Date()));    
-}
