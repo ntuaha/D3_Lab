@@ -1,0 +1,21 @@
+	body{
+				background-color:rgba(0,0,0,1);
+				overflow:hidden;
+  } 
+  text{
+    font-family: "微軟正黑體";
+    background-color:rgba(0,0,0,0);
+    color:white;
+  }
+  .time{
+    fill:#FFE066;
+    font-size:14px;
+  }
+  .area{
+    stroke:#50514F;
+    stroke-width:1px;
+    fill:#000000;
+  }
+  .curreny_text{
+    fill:#DCDCDC;
+  }
